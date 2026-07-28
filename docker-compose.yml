@@ -1,0 +1,32 @@
+services:
+  tdlightbotapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tdlight-telegram-bot-api-fork:latest
+    restart: unless-stopped
+    expose:
+      - "8081"
+    environment:
+      TELEGRAM_API_ID: ${TELEGRAM_API_ID}
+      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
+      TELEGRAM_ALLOW_USERS: ${TELEGRAM_ALLOW_USERS:-1}
+      TELEGRAM_ALLOW_USERS_REGISTRATION: ${TELEGRAM_ALLOW_USERS_REGISTRATION:-1}
+      TELEGRAM_LOCAL: ${TELEGRAM_LOCAL:-1}
+      TELEGRAM_USER_UPDATES_INCLUDE_OUTGOING: ${TELEGRAM_USER_UPDATES_INCLUDE_OUTGOING:-1}
+      TELEGRAM_VERBOSITY: ${TELEGRAM_VERBOSITY:-2}
+      TELEGRAM_STAT_HIDE_SENSIBLE_DATA: ${TELEGRAM_STAT_HIDE_SENSIBLE_DATA:-1}
+      TELEGRAM_FILE_EXPIRATION_TIME: ${TELEGRAM_FILE_EXPIRATION_TIME:-300}
+    networks:
+      - dokploy-network
+    volumes:
+      - tdlight_data:/var/lib/telegram-bot-api
+      - tdlight_temp:/tmp/telegram-bot-api
+
+volumes:
+  tdlight_data:
+  tdlight_temp:
+
+networks:
+  dokploy-network:
+    external: true
