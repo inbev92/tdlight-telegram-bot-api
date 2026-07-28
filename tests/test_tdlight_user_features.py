@@ -18,6 +18,8 @@ MAIN_CPP = (ROOT / "telegram-bot-api/telegram-bot-api.cpp").read_text()
 ENTRYPOINT = (ROOT / "docker-entrypoint.sh").read_text()
 README = (ROOT / "README.md").read_text()
 OPENAPI = (ROOT / "tdlight-api-openapi.yaml").read_text()
+DOCKERFILE = (ROOT / "Dockerfile").read_text()
+RUNTIME_DOCKERFILE = (ROOT / "Dockerfile.runtime").read_text()
 
 
 class GetChatHistoryContractTest(unittest.TestCase):
@@ -79,6 +81,13 @@ class OutgoingUpdatesContractTest(unittest.TestCase):
         )
         self.assertIn("--user-updates-include-outgoing", README)
         self.assertIn("TELEGRAM_USER_UPDATES_INCLUDE_OUTGOING", README)
+
+
+class DockerDeploymentContractTest(unittest.TestCase):
+    def test_healthcheck_uses_ipv4_loopback(self):
+        for dockerfile in (DOCKERFILE, RUNTIME_DOCKERFILE):
+            self.assertIn("HEALTHCHECK CMD nc -z 127.0.0.1 8081", dockerfile)
+            self.assertNotIn("HEALTHCHECK CMD nc -z localhost 8081", dockerfile)
 
 
 if __name__ == "__main__":
