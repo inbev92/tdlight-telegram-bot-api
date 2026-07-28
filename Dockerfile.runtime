@@ -1,0 +1,27 @@
+FROM alpine:3.12
+
+ARG TELEGRAM_BOT_API_BINARY_URL="https://github.com/inbev92/tdlight-telegram-bot-api/releases/download/deploy-6cdbd1a/telegram-bot-api-6cdbd1a"
+ARG TELEGRAM_BOT_API_BINARY_SHA256="ed708aa93eb67ff3f6a4adbaf5741f9c8bd214177476b87b36e98c5c509bca4e"
+
+ENV TELEGRAM_WORK_DIR="/var/lib/telegram-bot-api" \
+    TELEGRAM_TEMP_DIR="/tmp/telegram-bot-api"
+
+RUN apk add --no-cache --update ca-certificates openssl libstdc++ \
+ && wget -O /usr/local/bin/telegram-bot-api "${TELEGRAM_BOT_API_BINARY_URL}" \
+ && echo "${TELEGRAM_BOT_API_BINARY_SHA256}  /usr/local/bin/telegram-bot-api" | sha256sum -c - \
+ && chmod 755 /usr/local/bin/telegram-bot-api
+
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+
+RUN addgroup -g 101 -S telegram-bot-api \
+ && adduser -S -D -H -u 101 -h ${TELEGRAM_WORK_DIR} -s /sbin/nologin -G telegram-bot-api -g telegram-bot-api telegram-bot-api \
+ && chmod +x /docker-entrypoint.sh \
+ && mkdir -p ${TELEGRAM_WORK_DIR} ${TELEGRAM_TEMP_DIR} \
+ && chown telegram-bot-api:telegram-bot-api ${TELEGRAM_WORK_DIR} ${TELEGRAM_TEMP_DIR} \
+ && chmod 700 ${TELEGRAM_TEMP_DIR}
+
+USER telegram-bot-api:telegram-bot-api
+
+HEALTHCHECK CMD nc -z localhost 8081
+EXPOSE 8081/tcp 8082/tcp
+ENTRYPOINT ["/docker-entrypoint.sh"]

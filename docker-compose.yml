@@ -2,8 +2,8 @@ services:
   tdlightbotapi:
     build:
       context: .
-      dockerfile: Dockerfile
-    image: tdlight-telegram-bot-api-fork:latest
+      dockerfile: Dockerfile.runtime
+    image: tdlight-telegram-bot-api-fork:6cdbd1a
     restart: unless-stopped
     expose:
       - "8081"
