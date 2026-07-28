@@ -114,6 +114,7 @@ struct ClientParameters {
   bool no_file_limit_ = false;
   bool allow_users_ = false;
   bool allow_users_registration_ = false;
+  bool user_updates_include_outgoing_ = false;
   bool stats_hide_sensible_data_ = false;
 
   td::int32 api_id_ = 0;
