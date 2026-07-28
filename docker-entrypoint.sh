@@ -49,6 +49,11 @@ fi
 if [ -n "$TELEGRAM_ALLOW_USERS_REGISTRATION" ]; then
   CUSTOM_ARGS="${CUSTOM_ARGS} --allow-users-registration"
 fi
+case "${TELEGRAM_USER_UPDATES_INCLUDE_OUTGOING:-}" in
+  1|true|TRUE|yes|YES)
+    CUSTOM_ARGS="${CUSTOM_ARGS} --user-updates-include-outgoing"
+    ;;
+esac
 if [ -n "$TELEGRAM_INSECURE" ]; then
   CUSTOM_ARGS="${CUSTOM_ARGS} --insecure"
 fi

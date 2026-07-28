@@ -438,6 +438,7 @@ bool Client::init_methods() {
   methods_.emplace("disableproxy", &Client::process_disable_proxy_query);
 
   //custom user methods
+  methods_.emplace("getchathistory", &Client::process_get_chat_history_query);
   methods_.emplace("getchats", &Client::process_get_chats_query);
   methods_.emplace("getcommonchats", &Client::process_get_common_chats_query);
   methods_.emplace("getinactivechats", &Client::process_get_inactive_chats_query);
@@ -4862,6 +4863,9 @@ void Client::JsonMessage::store(td::JsonValueScope *scope) const {
     if (message_->ephemeral_message_id != 0) {
       object("ephemeral_message_id", message_->ephemeral_message_id);
     }
+  }
+  if (client_->is_user_) {
+    object("is_outgoing", td::JsonBool(message_->is_outgoing));
   }
   if (message_->sender_user_id != 0) {
     object("from", JsonUser(message_->sender_user_id, client_));
@@ -17931,6 +17935,25 @@ td::Status Client::process_delete_messages_range_query(PromisedQueryPtr &query) 
 //end custom methods impl
 //start custom user methods impl
 
+td::Status Client::process_get_chat_history_query(PromisedQueryPtr &query) {
+  CHECK_IS_USER();
+  auto chat_id = query->arg("chat_id");
+  auto from_message_id = get_message_id(query.get(), "from_message_id");
+  auto offset = get_integer_arg(query.get(), "offset", 0, -99, 0);
+  auto limit = get_integer_arg(query.get(), "limit", 100, 1, 100);
+  if (limit < -offset) {
+    return td::Status::Error(400, "Parameter limit must be greater than or equal to -offset");
+  }
+  auto only_local = to_bool(query->arg("only_local"));
+
+  check_chat(chat_id, AccessRights::Read, std::move(query),
+             [this, from_message_id, offset, limit, only_local](int64 chat_id, PromisedQueryPtr query) {
+               send_request(make_object<td_api::getChatHistory>(chat_id, from_message_id, offset, limit, only_local),
+                            td::make_unique<TdOnGetMessagesCallback>(this, std::move(query)));
+             });
+  return td::Status::OK();
+}
+
 td::Status Client::process_get_chats_query(PromisedQueryPtr &query) {
   CHECK_IS_USER();
   td::int32 limit = get_integer_arg(query.get(), "limit", 100, 0, 100);
@@ -19952,7 +19975,8 @@ bool Client::need_skip_update_message(int64 chat_id, const MessageInfo *message_
     chat_type = ChatInfo::Type::Private;
   }
   auto message_content_id = message_info->content->get_id();
-  if (message_info->is_outgoing && chat_id != 0) {
+  if (message_info->is_outgoing && chat_id != 0 &&
+      !(is_user_ && parameters_->user_updates_include_outgoing_)) {
     switch (message_content_id) {
       case td_api::messageChatChangeTitle::ID:
       case td_api::messageChatChangePhoto::ID:

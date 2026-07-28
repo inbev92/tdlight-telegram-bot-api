@@ -94,6 +94,10 @@ Makes the stats page (if enabled) hide the bot token and the webhook url to no l
 ##### Executable parameter `--http-idle-timeout`
 HTTP timeout in seconds. Use env `TELEGRAM_HTTP_IDLE_TIMEOUT` for docker. Defaults to 500s
 
+##### Flag `--user-updates-include-outgoing`
+Include regular outgoing messages in updates for user sessions. This is disabled by default and never changes bot
+updates. Set `TELEGRAM_USER_UPDATES_INCLUDE_OUTGOING=1` when using Docker.
+
 #### Existing Command Line Parameters
 Which are not properly documented, so they are written down here.
 
@@ -156,6 +160,20 @@ You can allow user accounts to access the bot api with the command-line option `
 `TELEGRAM_ALLOW_USERS` to `1` when using docker. User Mode is disabled by default, so only bots can access the api.
 
 You can now log into the bot api with user accounts to create userbots running on your account.
+
+#### Method `getChatHistory`
+Returns chat messages in reverse chronological order. This method is available only on the `/user` endpoint.
+
+Parameters:
+- `chat_id`: target chat identifier or username.
+- `from_message_id`: optional message identifier to start from; defaults to `0` (the latest message).
+- `offset`: optional offset from `from_message_id`, from `-99` to `0`; defaults to `0`.
+- `limit`: optional maximum result count, from `1` to `100`; defaults to `100` and must be at least `-offset`.
+- `only_local`: optional boolean; if true, do not send network requests; defaults to `false`.
+
+Regular outgoing messages are skipped from user updates by default, matching previous behavior. Start the server with
+`--user-updates-include-outgoing` (or set `TELEGRAM_USER_UPDATES_INCLUDE_OUTGOING=1` in Docker) to include them. Message
+objects returned to user sessions include an `is_outgoing` boolean, including messages returned by `getChatHistory`.
 
 Note: Never send your 2fa password over a plain http connection. Make sure https is enabled or use this api locally.
 

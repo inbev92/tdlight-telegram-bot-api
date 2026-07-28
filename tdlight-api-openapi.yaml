@@ -428,6 +428,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /getChatHistory:
+    post:
+      tags:
+        - added
+        - user-only
+      description: |-
+        *ONLY FOR USERS*
+
+        Returns messages in reverse chronological order. Regular outgoing updates are controlled separately by the server option `--user-updates-include-outgoing`.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GetChatHistoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GetChatHistoryRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetChatHistoryRequest'
+      responses:
+        '200':
+          description: Chat history
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - ok
+                  - result
+                properties:
+                  ok:
+                    default: true
+                    type: boolean
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /getChatMembers:
     post:
       tags:
@@ -9087,6 +9132,36 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   schemas:
+    GetChatHistoryRequest:
+      type: object
+      required:
+        - chat_id
+      properties:
+        chat_id:
+          description: Unique identifier for the target chat or username of the target supergroup or channel.
+          anyOf:
+            - type: integer
+            - type: string
+        from_message_id:
+          description: Message identifier to start from; use 0 to start from the latest message.
+          type: integer
+          default: 0
+        offset:
+          description: A non-positive offset from from_message_id. A negative value includes newer messages.
+          type: integer
+          minimum: -99
+          maximum: 0
+          default: 0
+        limit:
+          description: Maximum number of messages. Must be at least -offset when offset is negative.
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 100
+        only_local:
+          description: Return only locally available messages without network requests.
+          type: boolean
+          default: false
     Error:
       type: object
       properties:
@@ -9302,6 +9377,9 @@ components:
         message_id:
           description: Unique message identifier inside this chat
           type: integer
+        is_outgoing:
+          description: '*User sessions only*. True if the message was sent by the authorized user account.'
+          type: boolean
         from:
           $ref: '#/components/schemas/User'
         sender_chat:
